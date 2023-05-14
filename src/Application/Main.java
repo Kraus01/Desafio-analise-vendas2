@@ -4,9 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import entities.Sale;
@@ -22,26 +22,28 @@ public class Main {
 		
 		try (BufferedReader br = new BufferedReader ( new FileReader (path))){
 			
-			List <Sale> list = new ArrayList<>();
+			List <Sale> sale = new ArrayList<>();
 			
 			String line = br.readLine();
 			while (line != null) {
 				String [] fields = line.split(",");
-				list.add(new Sale (Integer.parseInt(fields[0]), Integer.parseInt(fields[1]), fields[2], Integer.parseInt(fields[3]), Double.parseDouble(fields[4])));
+				sale.add(new Sale (Integer.parseInt(fields[0]), Integer.parseInt(fields[1]), fields[2], Integer.parseInt(fields[3]), Double.parseDouble(fields[4])));
 				line = br.readLine();
-			
 			}
+			Set<String> uniqueSellers = sale.stream()
+			        .map(Sale::getSeller)
+			        .collect(Collectors.toSet());
 			
-			List<Sale> topFiveSales2016 = list.stream().filter(sale -> sale.getYear() == 2016).sorted(Comparator.comparing(Sale::averagePrice).reversed()).limit(5).collect(Collectors.toList());
-			double totalLogan = list.stream().filter(sale -> sale.getSeller().charAt(0) == 'L' && (sale.getMonth() == 1 || sale.getMonth() == 7 ))
-					.map(sale -> sale.getTotal())
-					.reduce(0.0, (x,y) -> x + y);
+			System.out.println("Total de vendas por vendedor:");
+			uniqueSellers.forEach(seller -> {
+			    double sum = sale.stream()
+			            .filter(s -> s.getSeller().equals(seller))
+			            .mapToDouble(Sale::getTotal)
+			            .sum();
+			    System.out.printf("%s - R$ %.2f%n", seller, sum);
+			});
 			
-			System.out.println();
-			System.out.println("Cinco primeiras vendas de 2016 de maior preço médio");
-			topFiveSales2016.forEach(System.out::println);
-			System.out.println();
-			System.out.println("Valor total vendido pelo vendedor Logan nos meses 1 e 7 = " + String.format("%.2f", totalLogan));
+			
 		}
 		
 		catch (IOException e) {
